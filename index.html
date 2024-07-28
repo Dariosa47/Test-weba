@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Account Generator</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: black;
+            color: #00ff00;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+        h1 {
+            text-align: center;
+            color: #ff0000;
+            margin-bottom: 20px;
+        }
+        .generator {
+            margin-bottom: 20px;
+        }
+        .generator input,
+        .generator button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .generator button {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .generator button:hover {
+            background: #cc0000;
+        }
+        .output {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            color: #00ff00;
+        }
+        .timer {
+            margin-top: 10px;
+            color: red;
+        }
+        .temporary-email-section {
+            display: none;
+        }
+        .email-form {
+            display: flex;
+            flex-direction: column;
+        }
+        .email-form input,
+        .email-form textarea {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: black;
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Random Account Generator</h1>
+        <div class="generator">
+            <label for="username-prefix">Enter username prefix (optional):</label>
+            <input type="text" id="username-prefix" placeholder="Prefix">
+            <button onclick="generateUsername()">Generate Username</button>
+        </div>
+        <div class="generator">
+            <button onclick="generateEmail()">Generate Email</button>
+        </div>
+        <div class="generator">
+            <button onclick="generatePassword()">Generate Password</button>
+        </div>
+        <div class="generator">
+            <button onclick="generateAll()">Generate All</button>
+        </div>
+        <div class="generator">
+            <button onclick="generateTemporaryEmail()">Generate Temporary Email (10 minutes)</button>
+        </div>
+        <div class="output" id="output">
+            <p id="username-output"></p>
+            <p id="email-output"></p>
+            <p id="password-output"></p>
+            <p id="temporary-email-output" onclick="openTemporaryEmailSection()" style="cursor: pointer; color: blue;"></p>
+            <div id="timer" class="timer"></div>
+        </div>
+        <div class="temporary-email-section" id="temporary-email-section">
+            <h2>Temporary Email</h2>
+            <p id="temporary-email-display"></p>
+            <div id="temporary-email-timer" class="timer"></div>
+            <div class="email-form">
+                <button onclick="receiveEmail()">Receive Email</button>
+                <button onclick="backToHome()">Back to Home</button>
+            </div>
+            <div class="output" id="temporary-email-output-messages"></div>
+        </div>
+    </div>
+
+    <script>
+        function getRandomString(length, characters) {
+            let result = '';
+            const charactersLength = characters.length;
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * charactersLength));
+            }
+            return result;
+        }
+
+        function generateUsername() {
+            const prefix = document.getElementById('username-prefix').value;
+            const username = prefix + getRandomString(8, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789');
+            document.getElementById('username-output').innerText = 'Username: ' + username;
+        }
+
+        function generateEmail() {
+            const email = getRandomString(8, 'abcdefghijklmnopqrstuvwxyz') + '@example.com';
+            document.getElementById('email-output').innerText = 'Email: ' + email;
+        }
+
+        function generatePassword() {
+            const password = getRandomString(12, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()');
+            document.getElementById('password-output').innerText = 'Password: ' + password;
+        }
+
+        function generateAll() {
+            generateUsername();
+            generateEmail();
+            generatePassword();
+        }
+
+        function generateTemporaryEmail() {
+            const email = getRandomString(8, 'abcdefghijklmnopqrstuvwxyz') + '@temp-mail.com';
+            document.getElementById('temporary-email-output').innerText = 'Temporary Email: ' + email;
+            document.getElementById('temporary-email-output').style.display = 'block';
+            localStorage.setItem('temporaryEmail', email);
+            startTimer(600, 'timer');
+            startTimer(600, 'temporary-email-timer');
+        }
+
+        function startTimer(duration, elementId) {
+            let timer = duration, minutes, seconds;
+            const display = document.getElementById(elementId);
+            const interval = setInterval(function () {
+                minutes = Math.floor(timer / 60);
+                seconds = timer % 60;
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = "Temporary email expires in: " + minutes + ":" + seconds;
+
+                if (--timer < 0) {
+                    clearInterval(interval);
+                    display.textContent = "Temporary email has expired!";
+                    localStorage.removeItem('temporaryEmail');
+                }
+            }, 1000);
+        }
+
+        function openTemporaryEmailSection() {
+            const email = localStorage.getItem('temporaryEmail');
+            if (email) {
+                document.getElementById('temporary-email-display').innerText = email;
+                document.getElementById('temporary-email-section').style.display = 'block';
+                window.scrollTo(0, document.body.scrollHeight);
+            }
+        }
+
+        function receiveEmail() {
+            const receivedMessages = getRandomString(20, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ');
+            const emailMessages = localStorage.getItem('emailMessages') || '';
+            localStorage.setItem('emailMessages', emailMessages + '\nReceived: ' + receivedMessages);
+            displayEmailMessages();
+        }
+
+        function displayEmailMessages() {
+            const emailMessages = localStorage.getItem('emailMessages') || 'No messages.';
+            document.getElementById('temporary-email-output-messages').innerText = emailMessages;
+        }
+
+        function backToHome() {
+            document.getElementById('temporary-email-section').style.display = 'none';
+            document.getElementById('temporary-email-output').style.display = 'none';
+            localStorage.removeItem('temporaryEmail');
+        }
+    </script>
+</body>
+</html>
